@@ -2,18 +2,22 @@ from django.conf import settings
 from django.db import models
 
 
-class Project(models.Model):
-    STATUS_OPEN = "open"
-    STATUS_CLOSED = "closed"
+PROJECT_NAME_MAX_LENGTH = 200
+PROJECT_STATUS_MAX_LENGTH = 6
 
+PROJECT_STATUS_OPEN = "open"
+PROJECT_STATUS_CLOSED = "closed"
+
+
+class Project(models.Model):
     STATUS_CHOICES = [
-        (STATUS_OPEN, "Open"),
-        (STATUS_CLOSED, "Closed"),
+        (PROJECT_STATUS_OPEN, "Open"),
+        (PROJECT_STATUS_CLOSED, "Closed"),
     ]
 
     name = models.CharField(
         "название проекта",
-        max_length=200,
+        max_length=PROJECT_NAME_MAX_LENGTH,
     )
     description = models.TextField(
         "описание проекта",
@@ -35,9 +39,9 @@ class Project(models.Model):
     )
     status = models.CharField(
         "статус",
-        max_length=6,
+        max_length=PROJECT_STATUS_MAX_LENGTH,
         choices=STATUS_CHOICES,
-        default=STATUS_OPEN,
+        default=PROJECT_STATUS_OPEN,
     )
     participants = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
