@@ -1,10 +1,41 @@
+from http import HTTPStatus
+
 from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.shortcuts import get_object_or_404, redirect, render
+from django.http import JsonResponse
+from django.shortcuts import redirect, render
 
 from .forms import EditProfileForm, LoginForm, RegisterForm, UserPasswordChangeForm
 from .models import User
+
+
+PARTICIPANTS_PER_PAGE = 12
+
+FILTER_OWNERS_OF_FAVORITE_PROJECTS = "owners-of-favorite-projects"
+FILTER_OWNERS_OF_PARTICIPATING_PROJECTS = "owners-of-participating-projects"
+FILTER_INTERESTED_IN_MY_PROJECTS = "interested-in-my-projects"
+FILTER_PARTICIPANTS_OF_MY_PROJECTS = "participants-of-my-projects"
+
+
+def paginate_queryset(request, queryset):
+    paginator = Paginator(queryset, PARTICIPANTS_PER_PAGE)
+    page_number = request.GET.get("page")
+    return paginator.get_page(page_number)
+
+
+def get_user_by_pk(pk):
+    return User.objects.filter(pk=pk).first()
+
+
+def user_not_found_response():
+    return JsonResponse(
+        {
+            "status": "error",
+            "message": "Пользователь не найден.",
+        },
+        status=HTTPStatus.NOT_FOUND,
+    )
 
 
 def register_view(request):
@@ -45,35 +76,32 @@ def user_list_view(request):
     if request.user.is_authenticated and active_filter:
         current_user = request.user
 
-        if active_filter == "owners-of-favorite-projects":
+        if active_filter == FILTER_OWNERS_OF_FAVORITE_PROJECTS:
             favorite_projects = current_user.favorites.all()
             participants_queryset = User.objects.filter(
                 owned_projects__in=favorite_projects,
             ).distinct()
 
-        elif active_filter == "owners-of-participating-projects":
+        elif active_filter == FILTER_OWNERS_OF_PARTICIPATING_PROJECTS:
             participated_projects = current_user.participated_projects.all()
             participants_queryset = User.objects.filter(
                 owned_projects__in=participated_projects,
             ).distinct()
 
-        elif active_filter == "interested-in-my-projects":
+        elif active_filter == FILTER_INTERESTED_IN_MY_PROJECTS:
             my_projects = current_user.owned_projects.all()
             participants_queryset = User.objects.filter(
                 favorites__in=my_projects,
             ).distinct()
 
-        elif active_filter == "participants-of-my-projects":
+        elif active_filter == FILTER_PARTICIPANTS_OF_MY_PROJECTS:
             my_projects = current_user.owned_projects.all()
             participants_queryset = User.objects.filter(
                 participated_projects__in=my_projects,
             ).distinct()
 
     participants_queryset = participants_queryset.order_by("-id")
-
-    paginator = Paginator(participants_queryset, 12)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginate_queryset(request, participants_queryset)
 
     return render(
         request,
@@ -87,8 +115,18 @@ def user_list_view(request):
 
 
 def user_detail_view(request, pk):
-    user = get_object_or_404(User, pk=pk)
-    return render(request, "users/user-details.html", {"user": user})
+    user = get_user_by_pk(pk)
+
+    if user is None:
+        return user_not_found_response()
+
+    return render(
+        request,
+        "users/user-details.html",
+        {
+            "user": user,
+        },
+    )
 
 
 @login_required
@@ -131,4 +169,10 @@ def change_password_view(request):
     else:
         form = UserPasswordChangeForm(user=request.user)
 
-    return render(request, "users/change_password.html", {"form": form})
+    return render(
+        request,
+        "users/change_password.html",
+        {
+            "form": form,
+        },
+    )
