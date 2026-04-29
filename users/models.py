@@ -1,6 +1,11 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 
+USER_NAME_MAX_LENGTH = 124
+USER_SURNAME_MAX_LENGTH = 124
+USER_PHONE_MAX_LENGTH = 12
+USER_ABOUT_MAX_LENGTH = 256
+
 
 class UserManager(BaseUserManager):
     def create_user(self, email, name, surname, password=None, **extra_fields):
@@ -39,11 +44,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     name = models.CharField(
         "имя",
-        max_length=124,
+        max_length=USER_NAME_MAX_LENGTH,
     )
     surname = models.CharField(
         "фамилия",
-        max_length=124,
+        max_length=USER_SURNAME_MAX_LENGTH,
     )
     avatar = models.ImageField(
         "аватар",
@@ -53,7 +58,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     phone = models.CharField(
         "телефон",
-        max_length=12,
+        max_length=USER_PHONE_MAX_LENGTH,
         unique=True,
         blank=True,
         null=True,
@@ -64,7 +69,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     about = models.TextField(
         "о себе",
-        max_length=256,
+        max_length=USER_ABOUT_MAX_LENGTH,
         blank=True,
     )
     favorites = models.ManyToManyField(
