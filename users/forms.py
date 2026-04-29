@@ -7,6 +7,9 @@ from django.contrib.auth.forms import PasswordChangeForm
 from .models import User
 
 
+RUSSIAN_PHONE_WITH_EIGHT_LENGTH = 11
+RUSSIAN_PHONE_DIGITS_AFTER_CODE = 10
+
 class RegisterForm(forms.ModelForm):
     password = forms.CharField(
         label="Пароль",
@@ -71,19 +74,23 @@ class EditProfileForm(forms.ModelForm):
 
         phone = phone.strip().replace(" ", "").replace("-", "")
 
-        if phone.startswith("8") and len(phone) == 11:
+        if phone.startswith("8") and len(phone) == RUSSIAN_PHONE_WITH_EIGHT_LENGTH:
             phone = "+7" + phone[1:]
 
-        pattern = r"^\+7\d{10}$"
+        pattern = rf"^\+7\d{{{RUSSIAN_PHONE_DIGITS_AFTER_CODE}}}$"
         if not re.match(pattern, phone):
-            raise forms.ValidationError("Телефон должен быть в формате 8XXXXXXXXXX или +7XXXXXXXXXX.")
+            raise forms.ValidationError(
+                "Телефон должен быть в формате 8XXXXXXXXXX или +7XXXXXXXXXX."
+            )
 
         queryset = User.objects.filter(phone=phone)
         if self.instance.pk:
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
-            raise forms.ValidationError("Пользователь с таким номером телефона уже существует.")
+            raise forms.ValidationError(
+                "Пользователь с таким номером телефона уже существует."
+            )
 
         return phone
 
