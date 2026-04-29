@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:16
+    container_name: teamfinder_clean_db
+    environment:
+      POSTGRES_DB: teamfinder
+      POSTGRES_USER: teamfinder_user
+      POSTGRES_PASSWORD: teamfinder_pass
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"
+    volumes:
+      - teamfinder_clean_postgres_data:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  teamfinder_clean_postgres_data:
