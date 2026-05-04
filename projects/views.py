@@ -88,7 +88,7 @@ def project_detail_view(request, pk):
     project = get_project_with_related_by_pk(pk)
 
     if project is None:
-        return redirect("projects:project_list")
+        return project_not_found_response()
 
     return render(
         request,
@@ -128,7 +128,7 @@ def project_edit_view(request, pk):
     project = get_project_by_pk(pk)
 
     if project is None:
-        return redirect("projects:project_list")
+        return project_not_found_response()
 
     if project.owner != request.user and not request.user.is_staff:
         return redirect("projects:project_detail", pk=project.pk)
